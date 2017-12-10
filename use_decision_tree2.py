@@ -104,7 +104,7 @@ if __name__ == "__main__":
     train_data, test_data = complete_train_and_test_data(\
         train_data_raw[:, :-1], test_data_raw[:, 1:])
     # train the decision tree
-    dtree = tree.DecisionTreeClassifier(criterion = "gini", min_samples_leaf=10)
+    dtree = tree.DecisionTreeClassifier(criterion = "gini", min_samples_leaf=15)
     dtree.fit(train_data, train_data_raw[:, -1])
     # make prediction
     prediction = dtree.predict(test_data)
