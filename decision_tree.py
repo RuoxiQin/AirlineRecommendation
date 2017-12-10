@@ -178,9 +178,12 @@ class DecisionTree:
         data = data[0]
         different_position = []
         is_empty_list = is_empty(data[:, col])
-        missing_data_num = data[is_empty_list].shape[0]
+        missing_data = data[is_empty_list]
+        missing_data_weight = data_weight[is_empty_list]
         data = data[~is_empty_list]
+        data_weight = data_weight[~is_empty_list]
         data = data[data[:, col].argsort()]
+        data_weight = data_weight[data[:, col].argsort()]
         # Find how many different split points are there
         for i in range(len(data) - 1):
             if data[i, col] != data[i + 1, col]:
@@ -199,8 +202,10 @@ class DecisionTree:
             sum_log = 0
             start_point = start_point_position[i]
             for j in range(i, len(different_position)):
-                new_counter = Counter(\
-                    data[start_point : different_position[j] + 1, -1])
+                new_counter = Counter()
+                for _index, _tag in \
+                    enumerate(data[start_point: different_position[j] + 1, -1]):
+                    new_counter.update({_tag: data_weight[i]})
                 for value, count in new_counter.items():
                     if value in main_counter:
                         modified_count = main_counter[value]
@@ -210,9 +215,8 @@ class DecisionTree:
                     else:
                         sum_log += count * log(count)
                 main_counter.update(new_counter)
-                unit_table[i, j] = -(sum_log / \
-                    (different_position[j] - start_point_position[i] + 1) - \
-                    log(different_position[j] - start_point_position[i] + 1))
+                unit_table[i, j] = -(sum_log / sum(main_counter.values()) - \
+                    log(sum(main_counter.values())))
                 start_point = different_position[j] + 1
         # Start dynamic programming
         OPT = np.zeros((k, len(different_position)))
@@ -243,18 +247,28 @@ class DecisionTree:
                 position = split_position_matrix[step][position]
             split_point.append(-1)
             split_point.reverse()
-            class_tag_list = []
-            for i in range(len(split_point) - 1):
-                class_tag_list.append(\
-                data[split_point[i] + 1 : split_point[i + 1] + 1, -1])
+            # partition the data and missing_data
+            class_tag_list = ([], [])  # first is data row, second is weight
+            # partition the non-missing data and the missing data
+            for _i in range(len(split_point) - 1):
+                nonmissing_data = \
+                    data[split_point[_i] + 1 : split_point[_i + 1] + 1, -1])
+                class_tag_list[0].append(\
+                    np.concatenate((nonmissing_data, missing_data), axis=0))
+                nonmissing_weight = \
+                    data_weight[split_point[_i] + 1 : split_point[_i + 1] + 1]
+                missing_weight_frac = nonmissing_weight.shape[0] / data.shape[0]
+                missing_weight = missing_data_weight * missing_weight_frac
+                class_tag_list[1].append(\
+                    np.concatenate((nonmissing_weight, missing_weight), axis=0))
             gain_ratio = \
                 DecisionTree.calculate_gain_ratio(\
-                class_tag_list, missing_data_num)
+                class_tag_list, missing_data.shape[0])
             if gain_ratio > max_gain_ratio:
                 max_gain_ratio = gain_ratio
                 best_split = split_point
         best_split.pop(0)  # pop the first -1
-        return [data[x, col] for x in best_split], max_gain_ratio
+        return [data[x, col] for x in best_split], max_gain_ratio  # TODO change
 
     def predict(self, data, is_empty=lambda x: x is None):
         """
