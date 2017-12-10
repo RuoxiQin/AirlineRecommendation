@@ -73,11 +73,13 @@ class DecisionTree:
             # brother branches
             possible_column.add(max_col)
         else:
-            result = Counter(data[:, -1])
+            result = Counter()
+            for i, v in enumerate(data[0][:, -1]):
+                result.update({v: data[1][i]})
             node = _DecisionTreeNode(results = result)
         return node
 
-    def divide_set(col, vals, data):
+    def divide_set(col, vals, data, is_empty=np.isnan):
         """
         Divide the data according to the thresholds in vals of column col.
         Does not allow empty subset!
@@ -85,31 +87,52 @@ class DecisionTree:
         :param col: Column index -- Int
         :param vals: Dividing thresholds. Divide the data <= thresholds in to
         one subnode -- List[Int]
-        :param data: data to split -- numpy.ndarray
-        :return: List of splitted data -- List[numpy.ndarray]
+        :param data: data to split and its weight -- 
+        (numpy.ndarray, numpy.ndarray)
+        :return: List of splitted data and weight -- 
+        List[(numpy.ndarray, numpy.ndarray)]
         """
+        weights = data[1]
+        data = data[0]
+        is_empty_list = is_empty(data[:, col])
+        missing_data = data[is_empty_list]
+        missing_data_weight = weights[is_empty_list]
+        missing_data_weight_sum = np.sum(missing_data_weight)
+        data = data[~is_empty_list]
+        data_weight = weights[~is_empty_list]
+        nonmissing_data_weight_sum = np.sum(data_weight)
         data_list = []
         upper_bound = -np.inf
         for bound in vals:
             lower_bound = upper_bound
             upper_bound = bound
-            data_list.append(data[(data[:, col] > lower_bound) & \
-                (data[:, col] <= upper_bound)])
+            choose = (data[:, col] > lower_bound) & \
+                (data[:, col] <= upper_bound)
+            one_data = np.concatenate((data[choose], missing_data))
+            one_weight_array = weights[choose]
+            frac = np.sum(one_weight_array) / nonmissing_data_weight_sum
+            one_weight = \
+                np.concatenate((one_weight_array, frac * missing_data_weight))
+            data_list.append((one_data, one_weight))
         return data_list
 
     def calculate_entropy(class_tags):
         """
         Calculate the entropy of a given class_tags list
 
-        :param class_tags: Classification tags list -- numpy.ndarray
+        :param class_tags: Classification tags list with weight -- 
+        (numpy.ndarray, numpy.ndarray)
         :return: The entropy of this list -- float
         """
-        if len(class_tags) == 0:
+        if len(class_tags[0]) == 0:
             return 0
+        total_weight = np.sum(class_tags[1])
         entropy = 0
-        counter = Counter(class_tags)
+        counter = Counter()
+        for i in range(class_tags[0].shape[0]):
+            counter.update({class_tags[0][i]: class_tags[1][i]})
         for count in counter.values():
-            fraction = count / len(class_tags)
+            fraction = count / total_weight
             entropy += fraction * log(fraction)
         return -entropy
 
@@ -135,30 +158,34 @@ class DecisionTree:
         Calculate the gain ratio of a given split
 
         :param class_tags_list: The classification tags of each sub nodes -- 
-        List[numpy.ndarray]
+        List[(numpy.ndarray, numpy.ndarray)]
         :param missing_data_num: number of missing data -- Int
         :return: Gain ratio of this split -- float
         """
         if len(class_tags_list) <= 1:
             return 0
-        parent_tags = np.concatenate(class_tags_list)
+        parent_tags = np.concatenate([pair[0] for pair in class_tags_list])
+        total_unmissing_weight = 0
+        for pair in class_tags_list:
+            total_unmissing_weight += np.sum(pair[1])
         complete_fraction = \
-            1 - missing_data_num / (len(parent_tags) + missing_data_num)
+            1 - missing_data_num / (total_unmissing_weight + missing_data_num)
         children_entropy = 0
         split_info = 0
         for subnode_tag in class_tags_list:
-            children_entropy += len(subnode_tag) * \
+            subnode_weight_sum = np.sum(subnode_tag[1])
+            children_entropy += subnode_weight_sum * \
                 DecisionTree.calculate_entropy(subnode_tag)
             split_fraction = \
-                len(subnode_tag) / (len(parent_tags) + missing_data_num)
+                subnode_weight_sum / (total_unmissing_weight + missing_data_num)
             if split_fraction > 0:
                 split_info += split_fraction * log(split_fraction)
         if missing_data_num > 0:
             split_fraction = \
-                missing_data_num / (len(parent_tags) + missing_data_num)
+                missing_data_num / (total_unmissing_weight + missing_data_num)
             split_info += split_fraction * log(split_fraction)
         delta = DecisionTree.calculate_entropy(parent_tags) - \
-            children_entropy / len(parent_tags)
+            children_entropy / total_unmissing_weight
         return complete_fraction * delta / (-split_info)
 
     def split(col, data, is_empty=np.isnan):
@@ -180,6 +207,7 @@ class DecisionTree:
         is_empty_list = is_empty(data[:, col])
         missing_data = data[is_empty_list]
         missing_data_weight = data_weight[is_empty_list]
+        missing_data_weight_sum = np.sum(missing_data_weight)
         data = data[~is_empty_list]
         data_weight = data_weight[~is_empty_list]
         data = data[data[:, col].argsort()]
@@ -247,28 +275,21 @@ class DecisionTree:
                 position = split_position_matrix[step][position]
             split_point.append(-1)
             split_point.reverse()
-            # partition the data and missing_data
-            class_tag_list = ([], [])  # first is data row, second is weight
-            # partition the non-missing data and the missing data
+            class_tag_list = []
             for _i in range(len(split_point) - 1):
-                nonmissing_data = \
-                    data[split_point[_i] + 1 : split_point[_i + 1] + 1, -1])
-                class_tag_list[0].append(\
-                    np.concatenate((nonmissing_data, missing_data), axis=0))
-                nonmissing_weight = \
+                new_data_list = \
+                    data[split_point[_i] + 1 : split_point[_i + 1] + 1, -1]
+                new_weight_list = \
                     data_weight[split_point[_i] + 1 : split_point[_i + 1] + 1]
-                missing_weight_frac = nonmissing_weight.shape[0] / data.shape[0]
-                missing_weight = missing_data_weight * missing_weight_frac
-                class_tag_list[1].append(\
-                    np.concatenate((nonmissing_weight, missing_weight), axis=0))
+                class_tag_list.append((new_data_list, new_weight_list))
             gain_ratio = \
                 DecisionTree.calculate_gain_ratio(\
-                class_tag_list, missing_data.shape[0])
+                class_tag_list, missing_data_weight_sum)
             if gain_ratio > max_gain_ratio:
                 max_gain_ratio = gain_ratio
                 best_split = split_point
         best_split.pop(0)  # pop the first -1
-        return [data[x, col] for x in best_split], max_gain_ratio  # TODO change
+        return [data[x, col] for x in best_split], max_gain_ratio
 
     def predict(self, data, is_empty=lambda x: x is None):
         """

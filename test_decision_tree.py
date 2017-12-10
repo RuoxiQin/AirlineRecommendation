@@ -18,6 +18,7 @@ class DecisionTreeTest(unittest.TestCase):
                 [4, 5, 6],
                 [7, 8, 9]]
         data = np.array(data)
+        data = (data, np.ones(data.shape[0]))
         part1 = [[1, 2, 3],
                  [4, 5, 6],
                  [7, 8, 9]]
@@ -25,13 +26,14 @@ class DecisionTreeTest(unittest.TestCase):
         correct.append(np.array(part1))
         result = DecisionTree.divide_set(0, [7], data)
         for i, v in enumerate(correct):
-            self.assertTrue(np.all(v == result[i]))
+            self.assertTrue(np.all(v == result[i][0]))
 
     def test_divide_set_2_part(self):
         data = [[1, 2, 3],
                 [4, 5, 6],
                 [7, 8, 9]]
         data = np.array(data)
+        data = (data, np.ones(data.shape[0]))
         part1 = [[1, 2, 3],
                  [4, 5, 6]]
         part2 = [[7, 8, 9]]
@@ -40,13 +42,14 @@ class DecisionTreeTest(unittest.TestCase):
         correct.append(np.array(part2))
         result = DecisionTree.divide_set(1, [5, 8], data)
         for i, v in enumerate(correct):
-            self.assertTrue(np.all(v == result[i]))
+            self.assertTrue(np.all(v == result[i][0]))
     
     def test_divide_set_3_part(self):
         data = [[1, 2, 3],
                 [4, 5, 6],
                 [7, 8, 9]]
         data = np.array(data)
+        data = (data, np.ones(data.shape[0]))
         part1 = [[1, 2, 3]]
         part2 = [[4, 5, 6]]
         part3 = [[7, 8, 9]]
@@ -56,24 +59,30 @@ class DecisionTreeTest(unittest.TestCase):
         correct.append(np.array(part3))
         result = DecisionTree.divide_set(2, [5, 8, 9], data)
         for i, v in enumerate(correct):
-            self.assertTrue(np.all(v == result[i]))
+            self.assertTrue(np.all(v == result[i][0]))
 
     def test_claculate_entropy_even(self):
-        class_tags = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3])
+        data = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3])
+        data = (data, np.ones(data.shape[0]))
         self.assertAlmostEqual(log(3), \
-            DecisionTree.calculate_entropy(class_tags))
+            DecisionTree.calculate_entropy(data))
 
     def test_claculate_entropy_empty(self):
-        class_tags = np.array([])
-        self.assertAlmostEqual(0, DecisionTree.calculate_entropy(class_tags))
+        data = np.array([])
+        data = (data, np.ones(data.shape[0]))
+        self.assertAlmostEqual(0, DecisionTree.calculate_entropy(data))
 
     def test_claculate_entropy_pure(self):
-        class_tags = np.array([1, 1, 1])
-        self.assertAlmostEqual(0, DecisionTree.calculate_entropy(class_tags))
+        data = np.array([1, 1, 1])
+        data = (data, np.ones(data.shape[0]))
+        self.assertAlmostEqual(0, DecisionTree.calculate_entropy(data))
 
     def test_calculate_gain_ratio_best(self):
         class_tags_list = \
             [np.array([1, 1, 1]), np.array([2, 2, 2]), np.array([3, 3, 3])]
+        for i in range(len(class_tags_list)):
+            class_tags_list[i] = \
+                (class_tags_list[i], np.ones(class_tags_list[i].shape[0]))
         self.assertAlmostEqual(1, \
             DecisionTree.calculate_gain_ratio(class_tags_list))
 
