@@ -75,7 +75,7 @@ def predict_overall_rating_missing(train_data, test_data, test_result):
             if np.isnan(row[i]):
                 row[i] = -1
     # train the decision tree
-    dtree = tree.DecisionTreeClassifier(criterion = "gini", min_samples_leaf=15)
+    dtree = tree.DecisionTreeClassifier(criterion = "gini", min_samples_leaf=10)
     dtree.fit(train_data[:, :-1], train_data[:, -1])
     # modify the prediction
     for i, row in enumerate(test_data):
@@ -86,19 +86,6 @@ def predict_overall_rating_missing(train_data, test_data, test_result):
                     row[j] = -1
             result = dtree.predict(row.reshape(1,-1))[0]
             test_result[i, 1] = result
-
-def get_airline_data(train_data, test_data):
-    """
-    Transfer string airline name to id
-    """
-    all_data = np.concatenate((train_data, test_data))
-    id_set = set(all_data[:, 0])
-    id_dict = {}
-    for id_, name in enumerate(id_set):
-        id_dict[name] = id_
-    for row in all_data:
-        row[0] = id_dict[row[0]]
-    return all_data[:train_data.shape[0]], all_data[train_data.shape[0]:]
 
 
 if __name__ == "__main__":
