@@ -85,8 +85,6 @@ def predict_overall_rating_missing(train_data, test_data, test_result):
                 if np.isnan(row[j]):
                     row[j] = -1
             result = dtree.predict(row.reshape(1,-1))[0]
-            if result == 1:
-                print("ha")
             test_result[i, 1] = result
 
 def get_airline_data(train_data, test_data):
