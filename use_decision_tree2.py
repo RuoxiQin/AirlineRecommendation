@@ -57,13 +57,37 @@ def predict_overall_rating_only(train_data, test_data, test_result):
             result = dtree.predict(np.array(row[0]).reshape(1, -1))
             test_result[i, 1] = result[0]
 
-def predict_nan_only(test_result):
+def predict_nan_only(test_data_raw, test_result):
     """
     If all information is nan, predict 0
     """
-    for i, row in enumerate(test_data):
+    for i, row in enumerate(test_data_raw):
         if np.all(np.isnan(row)):
             test_result[i, 1] = 0
+
+def predict_overall_rating_missing(train_data, test_data, test_result):
+    """
+    Modify the result whose overall rating is missing
+    """
+    train_data = train_data[np.isnan(train_data[:, 0])][:, 1:]
+    for row in train_data:
+        for i in range(row.shape[0]):
+            if np.isnan(row[i]):
+                row[i] = -1
+    # train the decision tree
+    dtree = tree.DecisionTreeClassifier(criterion = "gini", min_samples_leaf=15)
+    dtree.fit(train_data[:, :-1], train_data[:, -1])
+    # modify the prediction
+    for i, row in enumerate(test_data):
+        if np.isnan(row[0]):
+            row = row[1:]
+            for j in range(row.shape[0]):
+                if np.isnan(row[j]):
+                    row[j] = -1
+            result = dtree.predict(row.reshape(1,-1))[0]
+            if result == 1:
+                print("ha")
+            test_result[i, 1] = result
 
 def get_airline_data(train_data, test_data):
     """
@@ -112,7 +136,8 @@ if __name__ == "__main__":
         (test_data_raw[:, 0][:, np.newaxis], prediction[:, np.newaxis]), axis=1)
     # modify the result which only has overall rating
     predict_overall_rating_only(train_data_raw, test_data_raw[:, 1:], result)
-    predict_nan_only(result)
+    predict_overall_rating_missing(train_data_raw, test_data_raw[:, 1:], result)
+    predict_nan_only(test_data_raw, result)
     # Save the result to file
     df = pd.DataFrame(result.astype(int))
     df.to_csv("qin_ruoxi.csv", header = ["id", "recommended"], index = False)
