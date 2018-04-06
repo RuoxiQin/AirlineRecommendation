@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-This is the unittest of DecisionTree
-@author: Ross Qin
+This is the unittest of DecisionTree class
+@author: Ruoxi Qin
 """
 
 import unittest

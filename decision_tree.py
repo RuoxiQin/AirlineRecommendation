@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 '''
-@project CS565 Project 2
+@project Airline Recommendation
 @author Ruoxi Qin
 @Interpreter version Python3.6
 
-The decision tree structure
+The C4.5 decision tree
 '''
 
 import numpy as np

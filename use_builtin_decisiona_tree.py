@@ -15,7 +15,6 @@ from math import log
 from math import inf
 from sklearn import tree
 from collections import Counter
-import graphviz
 
 def complete_train_and_test_data(train_data, test_data):
     """

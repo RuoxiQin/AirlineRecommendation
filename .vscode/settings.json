@@ -1,3 +1,4 @@
 {
-    "python.pythonPath": "/Users/qin/.virtualenvs/data_mining/bin/python"
+    "python.pythonPath": "/Users/qin/.virtualenvs/data_mining/bin/python",
+    "python.linting.enabled": false
 }
