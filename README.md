@@ -1,5 +1,5 @@
 # AirlineRecommendation
-Predict whether a customer will recommend an airline based on his/her review
+Predict whether a customer will recommend an airline based on his/her review.
 
 ## Goal
 Based on the customer's review of the airline, predict whether a user will recommend this airline.
@@ -10,7 +10,12 @@ Our task is to predict whether the user in the test.csv will recommend the airli
 
 ## Solution
 We choose decision tree to make prediction.
-Even though the built-in decision decision tree in skilearn is a convinient tool for this task, it cannot handle the missing data internally.
+Even though the built-in decision decision tree in sklearn is a convenient tool for this task, it cannot handle the missing data internally.
 So we need to complete the training and testing data before using the built-in decision tree.
 
-To improve the prediction accuracy, we implement the C4.5 algorithm by ourselves. The C4.5 decision tree can handle the missing data internally so it may produce better result.
+To improve the prediction accuracy, we implement the C4.5 algorithm by ourselves.
+The C4.5 decision tree can handle the missing data internally so it may produce better result.
+
+## Result
+The built-in decision tree reaches about 93% prediction accuracy on testing data.
+While our own decision tree improves accuracy a little bit to 94%. 
