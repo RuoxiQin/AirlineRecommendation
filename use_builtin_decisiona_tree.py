@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 
 '''
-@project CS565 Project 2
+@project Airline Recommendation
 @author Ruoxi Qin
 @Interpreter version Python3.6
 
-Use the decision tree
+Use the sklearn decision tree
 '''
 
 import numpy as np
@@ -124,5 +124,5 @@ if __name__ == "__main__":
     predict_nan_only(test_data_raw, result)
     # Save the result to file
     df = pd.DataFrame(result.astype(int))
-    df.to_csv("qin_ruoxi.csv", header = ["id", "recommended"], index = False)
+    df.to_csv("prediction.csv", header = ["id", "recommended"], index = False)
     print("finish")

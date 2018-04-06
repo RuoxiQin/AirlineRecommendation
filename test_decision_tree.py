@@ -3,6 +3,9 @@
 
 """
 This is the unittest of DecisionTree class
+
+**DEPRECATED**
+This is the unittest for unweighted decision tree
 @author: Ruoxi Qin
 """
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-@project CS565 Project 2
+@project Airline Recommendation
 @author Ruoxi Qin
 @Interpreter version Python3.6
 
@@ -111,5 +111,5 @@ if __name__ == "__main__":
     prediction_result = make_prediction(tree, test_data_path)
     # save the prediction to csv file
     df = pd.DataFrame(prediction_result)
-    df.to_csv("qin_ruoxi.csv", header = ["id", "recommended"], index = False)
+    df.to_csv("prediction.csv", header = ["id", "recommended"], index = False)
     print("finish")
